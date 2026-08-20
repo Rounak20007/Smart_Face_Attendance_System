@@ -1,0 +1,1 @@
+alter table public.people add column if not exists roll_number text;
