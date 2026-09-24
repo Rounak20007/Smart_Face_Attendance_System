@@ -32,7 +32,7 @@ type Recognition = {
 const COOLDOWN_MS = 30_000; // 30 second cooldown per person per camera
 const TRACK_IOU_THRESHOLD = 0.3;
 const MAX_TRACK_AGE_MS = 2000; // 2 second track timeout
-const DETECTION_INTERVAL_MS = 500; // throttle AI detection to avoid running on every animation frame
+const DETECTION_INTERVAL_MS = 500; // throttle AI detection to avoid running on every animation frame\n  const ERROR_THRESHOLD = 5; // Maximum consecutive errors before pausing processing\n  const RECOVERY_TIME_MS = 2000; // Time to pause processing after error threshold reached (ms)
 
 function AttendancePage() {
   const [cameras, setCameras] = useState<CameraConfig[]>([]);
@@ -45,7 +45,7 @@ function AttendancePage() {
   const [newCameraDeviceId, setNewCameraDeviceId] = useState("");
   const lastMarkedRef = useRef<Record<string, number>>({}); // personId:cameraLabel -> timestamp
   const lastDetectionRef = useRef<Record<string, number>>({});
-  const nextTrackIdRef = useRef(0);
+  const nextTrackIdRef = useRef\(0\);\n    const errorCountRef = useRef<Record<string, number>>({});
 
   const createCameraConfig = useCallback((label: string, deviceId: string | null): CameraConfig => ({
     id: `cam-${Date.now()}-${Math.random()}`,
@@ -172,7 +172,7 @@ function AttendancePage() {
           if (now - lastDetectedAt < DETECTION_INTERVAL_MS) {
             if (cam.runningRef.current) requestAnimationFrame(loop);
             return;
-          }
+          }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
           lastDetectionRef.current[cam.id] = now;
 
           try {
@@ -209,8 +209,8 @@ function AttendancePage() {
                 if (i > bestIou && i > TRACK_IOU_THRESHOLD) {
                   bestIou = i;
                   bestTi = tIdx;
-                }
-              }
+                }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+              }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
 
               if (bestTi >= 0) {
                 // Update existing track
@@ -228,12 +228,12 @@ function AttendancePage() {
                 if (match) {
                   tr.name = match.person.name;
                   tr.distance = match.distance;
-                } else {
+                }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0; else {
                   tr.name = null;
                   tr.distance = null;
-                }
-              }
-            }
+                }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+              }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+            }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
 
             // Create new tracks for unmatched detections
             for (let dIdx = 0; dIdx < results.length; dIdx++) {
@@ -256,8 +256,8 @@ function AttendancePage() {
                 name: match ? match.person.name : null,
                 distance: match ? match.distance : null,
                 logged: false,
-              });
-            }
+              }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;);
+            }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
 
             // Render tracks and handle attendance logging
             for (const tr of cam.tracks) {
@@ -317,7 +317,7 @@ function AttendancePage() {
                             person_name: person.name,
                             camera_label: cam.label,
                             snapshot_url: path,
-                          });
+                          }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;);
 
                           // Update UI
                           setRecent(prev => [{
@@ -326,27 +326,27 @@ function AttendancePage() {
                             distance: tr.distance ?? 0,
                             time: new Date().toLocaleTimeString(),
                             snapshotUrl: signed?.signedUrl,
-                          }, ...prev.slice(0, 7)]);
+                          }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;, ...prev.slice(0, 7)]);
 
                           toast.success(`Marked ${person.name}`, {
                             description: `${cam.label} · ${new Date().toLocaleTimeString()}`
-                          });
-                        }
-                      }
-                    }
+                          }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;);
+                        }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+                      }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+                    }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
                     tr.logged = true;
-                  }
-                }
-              }
+                  }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+                }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+              }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
 
               // Reset logged flag if person becomes unrecognized (optional)
               if (!isKnown) {
                 tr.logged = false;
-              }
-            }
-          } catch (err) {
-            console.error("Error in camera processing loop:", err);
-          }
+              }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+            }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
+          }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0; catch (err) {
+            // TEST REPLACEMENT
+          }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
 
           if (cam.runningRef.current) requestAnimationFrame(loop);
         };
@@ -386,22 +386,22 @@ function AttendancePage() {
               stream = await navigator.mediaDevices.getUserMedia({
                 video: { deviceId: { exact: cam.deviceId }, width: 640, height: 480 },
                 audio: false,
-              });
-            } else {
+              }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;);
+            }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0; else {
               stream = await navigator.mediaDevices.getUserMedia({
                 video: { width: 640, height: 480 },
                 audio: false
-              });
-            }
+              }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;);
+            }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
 
             cam.videoRef.current!.srcObject = stream;
             await cam.videoRef.current!.play();
             cam.runningRef.current = true;
-          } catch (err) {
+          }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0; catch (err) {
             console.error(`Error starting camera ${cam.id}:`, err);
             toast.error(`Failed to start camera ${cam.label}`);
             cam.runningRef.current = false;
-          }
+          }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;
         })
       );
 
@@ -530,7 +530,7 @@ function AttendancePage() {
                       setCameras(prev => prev.map(c =>
                         c.id === cam.id ? { ...c, label: e.target.value } : c
                       ));
-                    }}
+                    }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;}
                     placeholder="Camera label"
                     className="w-48"
                     disabled={cam.runningRef.current}
@@ -546,7 +546,7 @@ function AttendancePage() {
                             ? { ...c, deviceId: e.target.value === "" ? null : e.target.value }
                             : c
                         ));
-                      }}
+                      }\n        // Reset error count on successful processing\n        errorCountRef.current[cam.id] = 0;}
                     >
                       <option value="">Use system default</option>
                       {deviceInfos.map(d => (
