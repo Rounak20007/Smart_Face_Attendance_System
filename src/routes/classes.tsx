@@ -37,6 +37,10 @@ type Session = {
 
 type Present = { person_name: string; camera_label: string; created_at: string };
 
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Please try again.";
+}
+
 function toLocalInput(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -124,7 +128,7 @@ function ClassesPage() {
       toast.success("Class started");
       loadSessions();
     } catch (error) {
-      toast.error("Could not start class", { description: error.message });
+      toast.error("Could not start class", { description: errorMessage(error) });
     } finally {
       setStartingSessionId(null);
     }
@@ -147,7 +151,7 @@ function ClassesPage() {
       toast.success("Class stopped");
       loadSessions();
     } catch (error) {
-      toast.error("Could not stop class", { description: error.message });
+      toast.error("Could not stop class", { description: errorMessage(error) });
     } finally {
       setStoppingSessionId(null);
     }
@@ -234,8 +238,6 @@ function ClassesPage() {
                 const endsAt = new Date(s.ends_at);
                 const isRunning = now >= startsAt && now <= endsAt;
                 const isUpcoming = now < startsAt;
-                const isFinished = now > endsAt;
-
                 return (
                   <li key={s.id} className="py-3 flex items-center justify-between gap-3">
                     <button className="text-left flex-1" onClick={() => openSession(s)}>
@@ -252,10 +254,10 @@ function ClassesPage() {
                           variant="ghost"
                           size="icon"
                           aria-label="Start session"
-                          disabled={s.startingSessionId === s.id || s.stoppingSessionId === s.id || !isUpcoming}
+                          disabled={startingSessionId === s.id || stoppingSessionId === s.id || !isUpcoming}
                           onClick={() => startSession(s)}
                         >
-                          {s.startingSessionId === s.id ? (
+                          {startingSessionId === s.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <Play className="h-4 w-4" />
@@ -267,10 +269,10 @@ function ClassesPage() {
                           variant="ghost"
                           size="icon"
                           aria-label="Stop session"
-                          disabled={s.startingSessionId === s.id || s.stoppingSessionId === s.id}
+                          disabled={startingSessionId === s.id || stoppingSessionId === s.id}
                           onClick={() => stopSession(s)}
                         >
-                          {s.stoppingSessionId === s.id ? (
+                          {stoppingSessionId === s.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <Square className="h-4 w-4" />

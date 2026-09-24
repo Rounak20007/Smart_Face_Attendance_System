@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type RefObject } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadFaceApi, bestMatch, type EnrolledPerson } from "@/lib/face";
 import { AppNav } from "@/components/AppNav";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Camera, Loader2, Play, Square, CheckCircle2, Plus } from "lucide-react";
+import { Camera, Loader2, Play, Square, CheckCircle2, Plus, X } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,11 +37,12 @@ const DETECTION_INTERVAL_MS = 500; // throttle AI detection to avoid running on 
 function AttendancePage() {
   const [cameras, setCameras] = useState<CameraConfig[]>([]);
   const [people, setPeople] = useState<EnrolledPerson[]>([]);
-  const [peopleCount, setPeopleCount] = useState(0);
   const [recent, setRecent] = useState<Recognition[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "running">("idle");
   const [statusText, setStatusText] = useState("Ready");
   const [deviceInfos, setDeviceInfos] = useState<MediaDeviceInfo[]>([]);
+  const [newCameraLabel, setNewCameraLabel] = useState("");
+  const [newCameraDeviceId, setNewCameraDeviceId] = useState("");
   const lastMarkedRef = useRef<Record<string, number>>({}); // personId:cameraLabel -> timestamp
   const lastDetectionRef = useRef<Record<string, number>>({});
   const nextTrackIdRef = useRef(0);
@@ -81,8 +82,15 @@ function AttendancePage() {
       toast.error("No video input devices found");
       return;
     }
-    const defaultDevice = deviceInfos[0];
-    setCameras(prev => [...prev, createCameraConfig(defaultDevice.label || `Camera ${prev.length + 1}`, defaultDevice.deviceId)]);
+    const selectedDevice = deviceInfos.find((device) => device.deviceId === newCameraDeviceId) ?? deviceInfos[0];
+    setCameras((prev) => [
+      ...prev,
+      createCameraConfig(
+        newCameraLabel.trim() || selectedDevice.label || `Camera ${prev.length + 1}`,
+        selectedDevice.deviceId,
+      ),
+    ]);
+    setNewCameraLabel("");
   };
 
   const removeCamera = (id: string) => {
@@ -107,7 +115,6 @@ function AttendancePage() {
         descriptors: p.descriptors as number[][],
       }));
       setPeople(peopleList);
-      setPeopleCount(peopleList.length);
       if (peopleList.length === 0) {
         toast.message("No enrolled people yet.", { description: "Add some in the Enroll tab." });
       }
@@ -148,7 +155,6 @@ function AttendancePage() {
         const v = cam.videoRef.current;
         if (!v || !v.srcObject) return;
 
-        const stream = v.srcObject as MediaStream;
         const videoWidth = v.videoWidth || 640;
         const videoHeight = v.videoHeight || 480;
 
@@ -176,8 +182,6 @@ function AttendancePage() {
               .withFaceDescriptors();
 
             octx.clearRect(0, 0, overlay.width, overlay.height);
-            const now = Date.now();
-
             // Age tracks and remove stale ones
             cam.tracks.forEach(t => (t.age += 1000 / 30)); // ~30fps
             cam.tracks = cam.tracks.filter(t => t.age < MAX_TRACK_AGE_MS);
@@ -188,7 +192,7 @@ function AttendancePage() {
             // Match detections to existing tracks
             for (let dIdx = 0; dIdx < results.length; dIdx++) {
               const det = results[dIdx];
-              const detBox = [
+              const detBox: [number, number, number, number] = [
                 det.detection.box.x,
                 det.detection.box.y,
                 det.detection.box.width,
@@ -200,7 +204,7 @@ function AttendancePage() {
               for (let tIdx = 0; tIdx < cam.tracks.length; tIdx++) {
                 if (usedTracks.has(tIdx)) continue;
                 const tr = cam.tracks[tIdx];
-                const trBox = [tr.x, tr.y, tr.w, tr.h];
+                const trBox: [number, number, number, number] = [tr.x, tr.y, tr.w, tr.h];
                 const i = iou(detBox, trBox);
                 if (i > bestIou && i > TRACK_IOU_THRESHOLD) {
                   bestIou = i;
@@ -235,7 +239,7 @@ function AttendancePage() {
             for (let dIdx = 0; dIdx < results.length; dIdx++) {
               if (usedDetections.has(dIdx)) continue;
               const det = results[dIdx];
-              const detBox = [
+              const detBox: [number, number, number, number] = [
                 det.detection.box.x,
                 det.detection.box.y,
                 det.detection.box.width,
@@ -293,7 +297,9 @@ function AttendancePage() {
                       snap.height = videoHeight;
                       const ctx = snap.getContext("2d");
                       ctx?.drawImage(v, 0, 0);
-                      const blob = await new Promise((res) => snap.toBlob(res, "image/jpeg", 0.8));
+                      const blob = await new Promise<Blob | null>((resolve) =>
+                        snap.toBlob(resolve, "image/jpeg", 0.8),
+                      );
 
                       if (blob) {
                         const path = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.jpg`;
@@ -442,6 +448,9 @@ function AttendancePage() {
           <p className="text-muted-foreground mt-1">
             Real-time face recognition across multiple camera feeds with tracking and attendance logging.
           </p>
+          <p className="text-sm text-muted-foreground mt-2" aria-live="polite">
+            Status: {statusText}
+          </p>
         </div>
 
         {/* Camera Controls */}
@@ -452,7 +461,8 @@ function AttendancePage() {
               <Input
                 id="cam-label"
                 placeholder="e.g. Main Entrance"
-                defaultValue="Main Entrance"
+                value={newCameraLabel}
+                onChange={(event) => setNewCameraLabel(event.target.value)}
               />
             </div>
             <div className="flex-1 flex-sm-col sm:w-48">
@@ -473,10 +483,8 @@ function AttendancePage() {
                 <>
                   <Label>Default device for new cameras</Label>
                   <select
-                    value={deviceInfos[0]?.deviceId ?? ""}
-                    onChange={(e) => {
-                      // Not storing globally - each camera will use its own device selection
-                    }}
+                    value={newCameraDeviceId}
+                    onChange={(event) => setNewCameraDeviceId(event.target.value)}
                   >
                     <option value="">Use system default</option>
                     {deviceInfos.map(d => (
@@ -551,6 +559,15 @@ function AttendancePage() {
                     <p className="text-sm text-muted-foreground">No video devices</p>
                   )}
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeCamera(cam.id)}
+                  disabled={status === "running"}
+                  aria-label={`Remove ${cam.label}`}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
 
               {/* Video Feed */}

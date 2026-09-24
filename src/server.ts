@@ -1,4 +1,4 @@
-import { createServer, type ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
 
 // For development, we'll create a Vite dev server
 // For production, this will be replaced by the built server entry
