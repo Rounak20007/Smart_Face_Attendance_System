@@ -173,7 +173,7 @@ function AttendancePage() {
             if (cam.runningRef.current) requestAnimationFrame(loop);
             return;
           }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
           lastDetectionRef.current[cam.id] = now;
 
           try {
@@ -211,9 +211,9 @@ function AttendancePage() {
                   bestIou = i;
                   bestTi = tIdx;
                 }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
               }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
 
               if (bestTi >= 0) {
                 // Update existing track
@@ -232,15 +232,15 @@ function AttendancePage() {
                   tr.name = match.person.name;
                   tr.distance = match.distance;
                 }
-          errorCountRef.current[cam.id] = 0; else {
+        errorCountRef.current[cam.id] = 0; else {
                   tr.name = null;
                   tr.distance = null;
                 }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
               }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
             }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
 
             // Create new tracks for unmatched detections
             for (let dIdx = 0; dIdx < results.length; dIdx++) {
@@ -264,9 +264,9 @@ function AttendancePage() {
                 distance: match ? match.distance : null,
                 logged: false,
               }
-          errorCountRef.current[cam.id] = 0;);
+        errorCountRef.current[cam.id] = 0;);
             }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
 
             // Render tracks and handle attendance logging
             for (const tr of cam.tracks) {
@@ -327,7 +327,7 @@ function AttendancePage() {
                             camera_label: cam.label,
                             snapshot_url: path,
                           }
-          errorCountRef.current[cam.id] = 0;);
+        errorCountRef.current[cam.id] = 0;);
 
                           // Update UI
                           setRecent(prev => [{
@@ -337,38 +337,38 @@ function AttendancePage() {
                             time: new Date().toLocaleTimeString(),
                             snapshotUrl: signed?.signedUrl,
                           }
-          errorCountRef.current[cam.id] = 0;, ...prev.slice(0, 7)]);
+        errorCountRef.current[cam.id] = 0;, ...prev.slice(0, 7)]);
 
                           toast.success(`Marked ${person.name}`, {
                             description: `${cam.label} · ${new Date().toLocaleTimeString()}`
                           }
-          errorCountRef.current[cam.id] = 0;);
+        errorCountRef.current[cam.id] = 0;);
                         }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
                       }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
                     }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
                     tr.logged = true;
                   }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
                 }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
               }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
 
               // Reset logged flag if person becomes unrecognized (optional)
               if (!isKnown) {
                 tr.logged = false;
               }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
             }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
           }
-          errorCountRef.current[cam.id] = 0; catch (err) {
-            // TEST REPLACEMENT
+        errorCountRef.current[cam.id] = 0; catch (err) {
+            // ERROR_HANDLING_PLACEHOLDER
           }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
 
           if (cam.runningRef.current) requestAnimationFrame(loop);
         };
@@ -409,27 +409,27 @@ function AttendancePage() {
                 video: { deviceId: { exact: cam.deviceId }, width: 640, height: 480 },
                 audio: false,
               }
-          errorCountRef.current[cam.id] = 0;);
+        errorCountRef.current[cam.id] = 0;);
             }
-          errorCountRef.current[cam.id] = 0; else {
+        errorCountRef.current[cam.id] = 0; else {
               stream = await navigator.mediaDevices.getUserMedia({
                 video: { width: 640, height: 480 },
                 audio: false
               }
-          errorCountRef.current[cam.id] = 0;);
+        errorCountRef.current[cam.id] = 0;);
             }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
 
             cam.videoRef.current!.srcObject = stream;
             await cam.videoRef.current!.play();
             cam.runningRef.current = true;
           }
-          errorCountRef.current[cam.id] = 0; catch (err) {
+        errorCountRef.current[cam.id] = 0; catch (err) {
             console.error(`Error starting camera ${cam.id}:`, err);
             toast.error(`Failed to start camera ${cam.label}`);
             cam.runningRef.current = false;
           }
-          errorCountRef.current[cam.id] = 0;
+        errorCountRef.current[cam.id] = 0;
         })
       );
 
@@ -559,7 +559,7 @@ function AttendancePage() {
                         c.id === cam.id ? { ...c, label: e.target.value } : c
                       ));
                     }
-          errorCountRef.current[cam.id] = 0;}
+        errorCountRef.current[cam.id] = 0;}
                     placeholder="Camera label"
                     className="w-48"
                     disabled={cam.runningRef.current}
@@ -576,7 +576,7 @@ function AttendancePage() {
                             : c
                         ));
                       }
-          errorCountRef.current[cam.id] = 0;}
+        errorCountRef.current[cam.id] = 0;}
                     >
                       <option value="">Use system default</option>
                       {deviceInfos.map(d => (
