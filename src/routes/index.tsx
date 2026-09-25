@@ -48,7 +48,6 @@ function AttendancePage() {
   const [newCameraLabel, setNewCameraLabel] = useState("");
   const [newCameraDeviceId, setNewCameraDeviceId] = useState("");
   const lastMarkedRef = useRef<Record<string, number>>({}); // personId:cameraLabel -> timestamp
-  const lastDetectionRef = useRef<Record<string, number>>({});
   const nextTrackIdRef = useRef(0);
 
   const createCameraConfig = useCallback((label: string, deviceId: string | null): CameraConfig => ({
@@ -171,24 +170,17 @@ function AttendancePage() {
         const loop = async () => {
           if (!cam.runningRef.current) return;
 
-          const now = Date.now();
-          const lastDetectedAt = lastDetectionRef.current[cam.id] ?? 0;
-          if (now - lastDetectedAt < DETECTION_INTERVAL_MS) {
-            if (cam.runningRef.current) requestAnimationFrame(loop);
-            return;
-          }
-          lastDetectionRef.current[cam.id] = now;
-
+          const startedAt = Date.now();
           try {
             const results = await faceapi
               .detectAllFaces(v, detectorOpts)
               .withFaceLandmarks()
               .withFaceDescriptors();
 
+            const now = Date.now();
             octx.clearRect(0, 0, overlay.width, overlay.height);
-            // Age tracks and remove stale ones
-            cam.tracks.forEach(t => (t.age += 1000 / 30)); // ~30fps
-            cam.tracks = cam.tracks.filter(t => t.age < MAX_TRACK_AGE_MS);
+            // Drop tracks that have not been matched within the timeout window
+            cam.tracks = cam.tracks.filter(t => now - t.lastSeenAt < MAX_TRACK_AGE_MS);
 
             const usedTracks = new Set<number>();
             const usedDetections = new Set<number>();
@@ -223,7 +215,7 @@ function AttendancePage() {
                 tr.y = detBox[1];
                 tr.w = detBox[2];
                 tr.h = detBox[3];
-                tr.age = 0;
+                tr.lastSeenAt = now;
                 usedTracks.add(bestTi);
                 usedDetections.add(dIdx);
 
@@ -256,7 +248,7 @@ function AttendancePage() {
                 y: detBox[1],
                 w: detBox[2],
                 h: detBox[3],
-                age: 0,
+                lastSeenAt: now,
                 name: match ? match.person.name : null,
                 distance: match ? match.distance : null,
                 logged: false,
@@ -352,7 +344,14 @@ function AttendancePage() {
             console.error("Error in camera processing loop:", err);
           }
 
-          if (cam.runningRef.current) requestAnimationFrame(loop);
+          // Sleep for whatever is left of the detection interval. Scheduling on a
+          // timer (not requestAnimationFrame) keeps inference off the UI frame
+          // budget and guarantees a non-overlapping loop even if detection is slow.
+          if (cam.runningRef.current) {
+            const elapsed = Date.now() - startedAt;
+            const delay = Math.max(0, DETECTION_INTERVAL_MS - elapsed);
+            setTimeout(loop, delay);
+          }
         };
 
         loop();
@@ -656,7 +655,7 @@ interface Track {
   y: number;
   w: number;
   h: number;
-  age: number; // milliseconds since last update
+  lastSeenAt: number; // timestamp of last detection match
   name: string | null;
   distance: number | null;
   logged: boolean;
