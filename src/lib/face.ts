@@ -9,9 +9,9 @@ let loadPromise: Promise<typeof import("face-api.js")> | null = null;
 /**
  * Loads and initializes the face-api.js models required for face detection and recognition.
  * This function ensures models are only loaded once, even if called multiple times.
- * 
+ *
  * @returns Promise that resolves to the face-api.js module with loaded models
- * 
+ *
  * @notes Loads three models:
  *   - tinyFaceDetector: For fast face detection
  *   - faceLandmark68Net: For facial landmark detection (needed for descriptors)
@@ -34,7 +34,7 @@ export async function loadFaceApi() {
 
 /**
  * Checks if the face-api.js models have been loaded.
- * 
+ *
  * @returns true if models are loaded or loading, false otherwise
  */
 export function isFaceApiLoaded() {
@@ -44,11 +44,11 @@ export function isFaceApiLoaded() {
 /**
  * Calculates the Euclidean distance between two numerical arrays.
  * Used to compare similarity between face descriptors (128-dimensional vectors).
- * 
+ *
  * @param a - First numerical array
  * @param b - Second numerical array
  * @returns The Euclidean distance between the arrays
- * 
+ *
  * @notes Lower distance indicates higher similarity. Face recognition typically
  *        uses a threshold (e.g., 0.5) to determine if two descriptors match.
  */
@@ -77,17 +77,18 @@ export type EnrolledPerson = {
  * Finds the best matching enrolled person for a given face descriptor.
  * Compares the input descriptor against all stored descriptors for each person
  * and returns the person with the smallest distance, if within threshold.
- * 
+ *
  * @param descriptor - The face descriptor to match (128-dimensional Float32Array)
  * @param people - Array of enrolled people to search through
  * @param threshold - Maximum distance for a match (default: 0.5)
  * @returns Object containing the matched person and distance, or null if no match within threshold
- * 
+ *
  * @notes The algorithm:
  *   1. Converts Float32Array to regular array for easier manipulation
  *   2. Iterates through all people and all their descriptors
  *   3. Tracks the person with minimum distance
  *   4. Returns match only if distance <= threshold
+ *   5. Includes early termination optimization for exact matches (distance 0)
  */
 export function bestMatch(
   descriptor: Float32Array,
@@ -97,24 +98,29 @@ export function bestMatch(
   // Convert Float32Array to regular array for easier manipulation
   const descriptorArray = Array.from(descriptor);
   let bestMatch: { person: EnrolledPerson; distance: number } | null = null;
-  
+
   // Check each enrolled person
   for (const person of people) {
     // Check each descriptor for this person (people can have multiple samples)
     for (const personDescriptor of person.descriptors) {
       const distance = euclidean(descriptorArray, personDescriptor);
-      
+
       // Update best match if this is closer than any previous match
       if (!bestMatch || distance < bestMatch.distance) {
         bestMatch = { person, distance };
+        
+        // Early termination: if we find an exact match (distance 0), we can't do better
+        if (distance === 0) {
+          return bestMatch;
+        }
       }
     }
   }
-  
+
   // Return match only if within acceptable threshold
   if (bestMatch && bestMatch.distance <= threshold) {
     return bestMatch;
   }
-  
+
   return null;
 }
