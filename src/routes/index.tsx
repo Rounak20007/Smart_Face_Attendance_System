@@ -29,10 +29,11 @@ type Recognition = {
   snapshotUrl?: string;
 };
 
-const COOLDOWN_MS = 30_000; // 30 second cooldown per person per camera
-const TRACK_IOU_THRESHOLD = 0.3;
-const MAX_TRACK_AGE_MS = 2000; // 2 second track timeout
-const DETECTION_INTERVAL_MS = 500; // throttle AI detection to avoid running on every animation frame\n  const ERROR_THRESHOLD = 5; // Maximum consecutive errors before pausing processing\n  const RECOVERY_TIME_MS = 2000; // Time to pause processing after error threshold reached (ms)
+import { COOLDOWN_MS } from "@/lib/constants"; // 30 second cooldown per person per camera
+import { TRACK_IOU_THRESHOLD } from "@/lib/constants";
+import { MAX_TRACK_AGE_MS } from "@/lib/constants"; // 2 second track timeout
+import { DETECTION_INTERVAL_MS } from "@/lib/constants"; // throttle AI detection to avoid running on every animation frame\n  import { ERROR_THRESHOLD } from "@/lib/constants"; // Maximum consecutive errors before pausing processing\n  import { RECOVERY_TIME_MS } from "@/lib/constants"; // Time to pause processing after error threshold reached (ms)
+import { FACE_RECOGNITION_THRESHOLD } from "@/lib/constants";
 
 function AttendancePage() {
   const [cameras, setCameras] = useState<CameraConfig[]>([]);
@@ -227,7 +228,7 @@ function AttendancePage() {
                 usedDetections.add(dIdx);
 
                 // Check recognition
-                const match = bestMatch(det.descriptor, people, 0.5);
+                const match = bestMatch(det.descriptor, people, FACE_RECOGNITION_THRESHOLD);
                 if (match) {
                   tr.name = match.person.name;
                   tr.distance = match.distance;
@@ -252,7 +253,7 @@ function AttendancePage() {
                 det.detection.box.width,
                 det.detection.box.height,
               ];
-              const match = bestMatch(det.descriptor, people, 0.5);
+              const match = bestMatch(det.descriptor, people, FACE_RECOGNITION_THRESHOLD);
               cam.tracks.push({
                 id: nextTrackIdRef.current++,
                 x: detBox[0],
