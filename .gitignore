@@ -31,5 +31,17 @@ dist-ssr
 *.sln
 *.sw?
 ~$*.docx
+# Secrets — never commit real credentials
 .env
+.env.*
+!.env.example
+*.local
+
+# Ad-hoc reports that may quote credentials from local config
 FaceMark_Attendance_System_Professor_Review.docx
+PROFESSOR_REVIEW.md
+PROFESSOR_ANALYSIS.md
+
+# Local tooling config (carries Supabase project ref + privileged features)
+.mcp.json
+.claude/
