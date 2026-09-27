@@ -222,9 +222,11 @@ function AttendancePage() {
                 // Check recognition
                 const match = bestMatch(det.descriptor, people, FACE_RECOGNITION_THRESHOLD);
                 if (match) {
+                  tr.personId = match.person.id;
                   tr.name = match.person.name;
                   tr.distance = match.distance;
                 } else {
+                  tr.personId = null;
                   tr.name = null;
                   tr.distance = null;
                 }
@@ -249,6 +251,7 @@ function AttendancePage() {
                 w: detBox[2],
                 h: detBox[3],
                 lastSeenAt: now,
+                personId: match ? match.person.id : null,
                 name: match ? match.person.name : null,
                 distance: match ? match.distance : null,
                 logged: false,
@@ -273,11 +276,12 @@ function AttendancePage() {
 
               // Draw label text
               octx.fillStyle = "#0b0f19";
+              octx.font = "14px sans-serif";
               octx.fillText(label, x + 5, y - 5);
 
               // Handle attendance logging for recognized persons
-              if (isKnown && tr.name && !tr.logged) {
-                const person = people.find(p => p.name === tr.name);
+              if (isKnown && tr.personId && !tr.logged) {
+                const person = people.find(p => p.id === tr.personId);
                 if (person) {
                   const key = `${person.id}:${cam.label}`;
                   const now = Date.now();
@@ -299,35 +303,48 @@ function AttendancePage() {
 
                       if (blob) {
                         const path = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.jpg`;
+
+                        // Write attendance row first, then attach snapshot.
+                        // Decouples logging from upload success — if storage fails,
+                        // the person is still marked present, just without a photo.
+                        const { error: insertErr } = await supabase.from("attendance").insert({
+                          person_id: person.id,
+                          person_name: person.name,
+                          camera_label: cam.label,
+                          snapshot_url: null, // filled in below if upload succeeds
+                        });
+
+                        if (insertErr) {
+                          console.error("Attendance insert failed:", insertErr);
+                          toast.error(`Could not mark ${person.name}`, { description: insertErr.message });
+                          return;
+                        }
+
+                        // Now try the snapshot. If this fails, the row is already written.
                         const { error: upErr } = await supabase.storage
                           .from("attendance-snapshots")
                           .upload(path, blob, { contentType: "image/jpeg" });
 
+                        let snapshotUrl: string | undefined;
                         if (!upErr) {
                           const { data: signed } = await supabase.storage
                             .from("attendance-snapshots")
                             .createSignedUrl(path, 60 * 60 * 24 * 7);
-
-                          await supabase.from("attendance").insert({
-                            person_id: person.id,
-                            person_name: person.name,
-                            camera_label: cam.label,
-                            snapshot_url: path,
-                          });
-
-                          // Update UI
-                          setRecent(prev => [{
-                            key: `${person.id}:${now}`,
-                            name: person.name,
-                            distance: tr.distance ?? 0,
-                            time: new Date().toLocaleTimeString(),
-                            snapshotUrl: signed?.signedUrl,
-                          }, ...prev.slice(0, MAX_RECENT_DISPLAY - 1)]);
-
-                          toast.success(`Marked ${person.name}`, {
-                            description: `${cam.label} · ${new Date().toLocaleTimeString()}`
-                          });
+                          snapshotUrl = signed?.signedUrl;
                         }
+
+                        // Update UI
+                        setRecent(prev => [{
+                          key: `${person.id}:${now}`,
+                          name: person.name,
+                          distance: tr.distance ?? 0,
+                          time: new Date().toLocaleTimeString(),
+                          snapshotUrl,
+                        }, ...prev.slice(0, MAX_RECENT_DISPLAY - 1)]);
+
+                        toast.success(`Marked ${person.name}`, {
+                          description: `${cam.label} · ${new Date().toLocaleTimeString()}`
+                        });
                       }
                     }
                     tr.logged = true;
@@ -656,6 +673,7 @@ interface Track {
   w: number;
   h: number;
   lastSeenAt: number; // timestamp of last detection match
+  personId: string | null; // person ID for reliable identity, not name
   name: string | null;
   distance: number | null;
   logged: boolean;
