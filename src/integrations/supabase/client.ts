@@ -28,17 +28,23 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+  // Vite only exposes env vars to client code when they carry the VITE_ prefix,
+  // and it replaces them at build time. `process` does not exist in the browser,
+  // so referencing it unguarded throws a ReferenceError rather than falling
+  // back -- which is what the old `|| process.env.X` did whenever the VITE_ name
+  // was absent. Keep the guard so a missing var is a clear config error.
+  const env = import.meta.env;
+  const SUPABASE_URL = env.VITE_SUPABASE_URL;
+  const SUPABASE_PUBLISHABLE_KEY = env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
+      ...(!SUPABASE_URL ? ['VITE_SUPABASE_URL'] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY ? ['VITE_SUPABASE_PUBLISHABLE_KEY'] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
+    const message =
+      `Missing Supabase environment variable(s): ${missing.join(', ')}. ` +
+      `Add them to .env.local with the VITE_ prefix and restart the dev server.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }

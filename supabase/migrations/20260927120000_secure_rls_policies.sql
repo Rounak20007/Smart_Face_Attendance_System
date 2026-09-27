@@ -28,6 +28,21 @@ DROP POLICY IF EXISTS "Anyone can create class sessions" ON public.class_session
 DROP POLICY IF EXISTS "public read snapshots" ON storage.objects;
 DROP POLICY IF EXISTS "public upload snapshots" ON storage.objects;
 
+-- The staff policies from a previous run of this same migration. Without these
+-- the CREATE POLICY statements in section 3 fail with 42710 on a re-apply, and
+-- the script aborts before it ever reaches mark_attendance() in section 4.
+DROP POLICY IF EXISTS "staff can read people" ON public.people;
+DROP POLICY IF EXISTS "staff can insert people" ON public.people;
+DROP POLICY IF EXISTS "staff can update people" ON public.people;
+DROP POLICY IF EXISTS "staff can delete people" ON public.people;
+DROP POLICY IF EXISTS "staff can read attendance" ON public.attendance;
+DROP POLICY IF EXISTS "staff can update attendance" ON public.attendance;
+DROP POLICY IF EXISTS "staff can delete attendance" ON public.attendance;
+DROP POLICY IF EXISTS "staff can read class_sessions" ON public.class_sessions;
+DROP POLICY IF EXISTS "staff can insert class_sessions" ON public.class_sessions;
+DROP POLICY IF EXISTS "staff can update class_sessions" ON public.class_sessions;
+DROP POLICY IF EXISTS "staff can delete class_sessions" ON public.class_sessions;
+
 -- ---------------------------------------------------------------------------
 -- 2. Withdraw anon access
 --
@@ -88,7 +103,23 @@ CREATE POLICY "staff can delete class_sessions" ON public.class_sessions
 -- caller holds no direct INSERT grant. The person_id is resolved from the
 -- database, not accepted from the client, so a caller cannot attribute an
 -- attendance row to an arbitrary person.
+--
+-- The DROP and the per-role REVOKEs are load-bearing, not tidiness.
+--
+-- CREATE OR REPLACE keeps the existing ACL. Worse, Supabase's default privileges
+-- grant EXECUTE on new functions in `public` to `anon` and `authenticated`
+-- *as direct role grants* -- not through PUBLIC. So `REVOKE ... FROM PUBLIC`
+-- leaves those grants completely intact, and a SECURITY DEFINER function with
+-- anon holding EXECUTE lets an anonymous caller write attendance rows even
+-- though it holds no INSERT on the table.
+--
+-- Both fixes are needed: the drop clears the inherited ACL, and the per-role
+-- revokes clear the default-privilege grant that would otherwise be reapplied.
+-- The ALTER DEFAULT PRIVILEGES stops the next function created in this schema
+-- from silently regaining anon EXECUTE.
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS public.mark_attendance(UUID, TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.mark_attendance(
   p_person_id UUID,
   p_camera_label TEXT,
@@ -118,7 +149,13 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.mark_attendance(UUID, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.mark_attendance(UUID, TEXT, TEXT) FROM anon;
+REVOKE ALL ON FUNCTION public.mark_attendance(UUID, TEXT, TEXT) FROM authenticated;
 GRANT EXECUTE ON FUNCTION public.mark_attendance(UUID, TEXT, TEXT) TO authenticated;
+
+-- Keep anon out of any future function in this schema.
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  REVOKE EXECUTE ON FUNCTIONS FROM anon;
 
 -- ---------------------------------------------------------------------------
 -- 5. Snapshot storage
@@ -128,6 +165,9 @@ GRANT EXECUTE ON FUNCTION public.mark_attendance(UUID, TEXT, TEXT) TO authentica
 -- ---------------------------------------------------------------------------
 DROP POLICY IF EXISTS "public read snapshots" ON storage.objects;
 DROP POLICY IF EXISTS "public upload snapshots" ON storage.objects;
+DROP POLICY IF EXISTS "staff can read snapshots" ON storage.objects;
+DROP POLICY IF EXISTS "staff can upload snapshots" ON storage.objects;
+DROP POLICY IF EXISTS "staff can delete snapshots" ON storage.objects;
 
 CREATE POLICY "staff can read snapshots" ON storage.objects
   FOR SELECT TO authenticated
