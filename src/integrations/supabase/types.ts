@@ -111,7 +111,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      // Added by 20260927120000_secure_rls_policies.sql. Regenerate with
+      // `supabase gen types` once the migration has been applied.
+      mark_attendance: {
+        Args: {
+          p_person_id: string
+          p_camera_label: string
+          p_snapshot_url?: string | null
+        }
+        Returns: Database["public"]["Tables"]["attendance"]["Row"]
+      }
     }
     Enums: {
       [_ in never]: never

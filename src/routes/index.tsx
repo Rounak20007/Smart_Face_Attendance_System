@@ -302,35 +302,39 @@ function AttendancePage() {
                       );
 
                       if (blob) {
+                        // Upload the snapshot first, purely to obtain a storage path.
+                        // A failure here is not fatal — the row is still written below,
+                        // just without a photo, so a full bucket never loses attendance.
                         const path = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.jpg`;
-
-                        // Write attendance row first, then attach snapshot.
-                        // Decouples logging from upload success — if storage fails,
-                        // the person is still marked present, just without a photo.
-                        const { error: insertErr } = await supabase.from("attendance").insert({
-                          person_id: person.id,
-                          person_name: person.name,
-                          camera_label: cam.label,
-                          snapshot_url: null, // filled in below if upload succeeds
-                        });
-
-                        if (insertErr) {
-                          console.error("Attendance insert failed:", insertErr);
-                          toast.error(`Could not mark ${person.name}`, { description: insertErr.message });
-                          return;
-                        }
-
-                        // Now try the snapshot. If this fails, the row is already written.
                         const { error: upErr } = await supabase.storage
                           .from("attendance-snapshots")
                           .upload(path, blob, { contentType: "image/jpeg" });
 
-                        let snapshotUrl: string | undefined;
-                        if (!upErr) {
+                        let snapshotPath: string | null = null;
+                        let signedUrl: string | undefined;
+                        if (upErr) {
+                          console.error("Snapshot upload failed:", upErr);
+                        } else {
+                          snapshotPath = path;
                           const { data: signed } = await supabase.storage
                             .from("attendance-snapshots")
                             .createSignedUrl(path, 60 * 60 * 24 * 7);
-                          snapshotUrl = signed?.signedUrl;
+                          signedUrl = signed?.signedUrl;
+                        }
+
+                        // Single write path: mark_attendance() resolves person_name from
+                        // person_id server-side, so the row can never be attributed to the
+                        // wrong person, and the client holds no direct INSERT on the log.
+                        const { error: markErr } = await supabase.rpc("mark_attendance", {
+                          p_person_id: person.id,
+                          p_camera_label: cam.label,
+                          p_snapshot_url: snapshotPath,
+                        });
+
+                        if (markErr) {
+                          console.error("Attendance mark failed:", markErr);
+                          toast.error(`Could not mark ${person.name}`, { description: markErr.message });
+                          return;
                         }
 
                         // Update UI
@@ -339,7 +343,7 @@ function AttendancePage() {
                           name: person.name,
                           distance: tr.distance ?? 0,
                           time: new Date().toLocaleTimeString(),
-                          snapshotUrl,
+                          snapshotUrl: signedUrl,
                         }, ...prev.slice(0, MAX_RECENT_DISPLAY - 1)]);
 
                         toast.success(`Marked ${person.name}`, {
