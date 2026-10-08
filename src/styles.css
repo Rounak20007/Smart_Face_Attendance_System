@@ -4,17 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
+ * Design system definition - Academic Professional Theme
  *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * All colors formulated in OKLCH for uniform perceptual contrast.
  */
 
 @theme inline {
@@ -41,6 +33,10 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -62,73 +58,104 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  /* Surfaces & Text - Warm Slate/Ivory base */
+  --background: oklch(0.985 0.005 240);
+  --foreground: oklch(0.180 0.045 255);
+  --card: oklch(1.000 0 0);
+  --card-foreground: oklch(0.180 0.045 255);
+  --popover: oklch(1.000 0 0);
+  --popover-foreground: oklch(0.180 0.045 255);
+
+  /* Academic Brand Identity */
+  --primary: oklch(0.275 0.095 258);          /* Deep Navy #0A2463 */
+  --primary-foreground: oklch(0.985 0.005 240);
+  --secondary: oklch(0.320 0.110 15);         /* Academic Burgundy #800020 */
+  --secondary-foreground: oklch(0.985 0.005 240);
+  --accent: oklch(0.740 0.140 85);            /* Collegiate Gold #D4AF37 */
+  --accent-foreground: oklch(0.180 0.045 255);
+
+  /* Neutrals & Borders */
+  --muted: oklch(0.950 0.008 240);
+  --muted-foreground: oklch(0.460 0.025 250);
+  --border: oklch(0.900 0.010 240);
+  --input: oklch(0.900 0.010 240);
+  --ring: oklch(0.275 0.095 258);
+
+  /* Feedback Indicators */
+  --success: oklch(0.550 0.150 142);          /* Forest Green #228B22 */
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.680 0.170 60);           /* Academic Amber #FF8C00 */
+  --warning-foreground: oklch(0.180 0.045 255);
+  --destructive: oklch(0.520 0.210 25);       /* Crimson Red #DC143C */
+  --destructive-foreground: oklch(0.985 0 0);
+
+  /* Data Visualization Series */
+  --chart-1: oklch(0.275 0.095 258);          /* Navy Primary */
+  --chart-2: oklch(0.550 0.150 142);          /* Forest Green (Present) */
+  --chart-3: oklch(0.740 0.140 85);           /* Gold (Late / Review) */
+  --chart-4: oklch(0.520 0.210 25);           /* Crimson (Absent / At-Risk) */
+  --chart-5: oklch(0.320 0.110 15);           /* Burgundy (Special) */
+
+  /* Sidebar */
+  --sidebar: oklch(0.970 0.008 240);
+  --sidebar-foreground: oklch(0.180 0.045 255);
+  --sidebar-primary: oklch(0.275 0.095 258);
+  --sidebar-primary-foreground: oklch(0.985 0.005 240);
+  --sidebar-accent: oklch(0.930 0.012 240);
+  --sidebar-accent-foreground: oklch(0.180 0.045 255);
+  --sidebar-border: oklch(0.890 0.010 240);
+  --sidebar-ring: oklch(0.275 0.095 258);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Surfaces & Text - Obsidian / Deep Navy */
+  --background: oklch(0.130 0.030 258);
+  --foreground: oklch(0.960 0.010 240);
+  --card: oklch(0.180 0.035 258);
+  --card-foreground: oklch(0.960 0.010 240);
+  --popover: oklch(0.180 0.035 258);
+  --popover-foreground: oklch(0.960 0.010 240);
+
+  /* Academic Brand Identity (Dark Mode Adjusted) */
+  --primary: oklch(0.650 0.120 250);          /* High-legibility Indigo-Navy */
+  --primary-foreground: oklch(0.120 0.030 258);
+  --secondary: oklch(0.480 0.120 15);         /* Elevated Burgundy */
+  --secondary-foreground: oklch(0.960 0.010 240);
+  --accent: oklch(0.780 0.145 85);            /* Luminous Gold */
+  --accent-foreground: oklch(0.120 0.030 258);
+
+  /* Neutrals & Borders */
+  --muted: oklch(0.230 0.030 258);
+  --muted-foreground: oklch(0.700 0.020 250);
+  --border: oklch(0.280 0.025 258);
+  --input: oklch(0.280 0.025 258);
+  --ring: oklch(0.650 0.120 250);
+
+  /* Feedback Indicators */
+  --success: oklch(0.620 0.160 142);
+  --success-foreground: oklch(0.120 0.030 258);
+  --warning: oklch(0.740 0.160 60);
+  --warning-foreground: oklch(0.120 0.030 258);
+  --destructive: oklch(0.620 0.200 25);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  /* Data Visualization Series (Dark Adjusted) */
+  --chart-1: oklch(0.650 0.120 250);
+  --chart-2: oklch(0.620 0.160 142);
+  --chart-3: oklch(0.780 0.145 85);
+  --chart-4: oklch(0.620 0.200 25);
+  --chart-5: oklch(0.550 0.130 15);
+
+  /* Sidebar */
+  --sidebar: oklch(0.150 0.030 258);
+  --sidebar-foreground: oklch(0.960 0.010 240);
+  --sidebar-primary: oklch(0.650 0.120 250);
+  --sidebar-primary-foreground: oklch(0.120 0.030 258);
+  --sidebar-accent: oklch(0.220 0.030 258);
+  --sidebar-accent-foreground: oklch(0.960 0.010 240);
+  --sidebar-border: oklch(0.260 0.025 258);
+  --sidebar-ring: oklch(0.650 0.120 250);
 }
 
 @layer base {
@@ -139,5 +166,6 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }

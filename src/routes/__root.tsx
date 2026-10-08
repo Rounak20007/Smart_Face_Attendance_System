@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
-import { RequireSession } from "@/components/RequireSession";
+import { AppNav } from "@/components/layout";
+import { RequireSession } from "@/components/auth";
 
 function NotFoundComponent() {
   return (
@@ -78,7 +79,12 @@ function RootComponent() {
       {/* UI gate only — the RLS policies are the actual security boundary.
           An unauthenticated visitor can bypass this and still read nothing. */}
       <RequireSession>
-        <Outlet />
+        <div className="min-h-screen bg-background flex flex-col">
+          <AppNav />
+          <div id="main-content" className="flex-1 pb-20 md:pb-8 focus:outline-hidden">
+            <Outlet />
+          </div>
+        </div>
       </RequireSession>
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
